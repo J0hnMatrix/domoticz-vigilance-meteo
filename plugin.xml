@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin key="MeteoFranceVigilance" name="Vigilance Météo France" author="Antigravity" version="1.4.1" wikilink="https://github.com/J0hnMatrix/domoticz-vigilance-meteo">
+    <description>
+        Plugin Météo France &amp; Vigilance (Sans clé requise)
+
+        Ce plugin récupère les prévisions et alertes de Météo France pour votre ville :
+        - Vigilance d'aujourd'hui et de demain (Tuiles d'Alerte)
+        - Température et humidité actuelles (Tuile Temp+Hum)
+        - Description des prévisions quotidiennes (Tuile de Texte)
+        - Prévisions de pluie dans l'heure (Tuile d'Alerte)
+
+        Aucune inscription ni clé API personnelle n'est requise ! Renseignez simplement votre ville ou code postal.
+    </description>
+    <params>
+        <param field="Mode1" label="Localisation (Ville, Code Postal ou Dept)" width="200px" required="true" default="75001"/>
+        <param field="Mode2" label="Intervalle de mise à jour (min)" width="60px" required="true" default="30"/>
+        <param field="Mode6" label="Debug" width="75px">
+            <options>
+                <option label="Non" value="False" default="true" />
+                <option label="Oui" value="True" />
+            </options>
+        </param>
+    </params>
+</plugin>
