@@ -45,20 +45,16 @@ Le plugin crée automatiquement **5 dispositifs** sur votre tableau de bord Domo
 
 1. Accédez au répertoire de votre serveur Domoticz.
 2. Allez dans le dossier `plugins/`.
-3. Créez un dossier nommé `domoticz-vigilance-meteo` :
+3. Tapez les commandes :
    ```bash
-   mkdir -p domoticz/plugins/domoticz-vigilance-meteo
+   git clone https://github.com/J0hnMatrix/domoticz-vigilance-meteo
    ```
-4. Déposez-y les fichiers `plugin.py` et `plugin.xml`.
-5. Sur Linux / Raspberry Pi, attribuez les droits d'exécution au script :
-   ```bash
-   chmod +x domoticz/plugins/domoticz-vigilance-meteo/plugin.py
-   ```
-6. Redémarrez Domoticz :
+4. Redémarrez Domoticz :
    ```bash
    sudo systemctl restart domoticz
    ```
-
+   ou redémarrez votre conteneur Domoticz
+   
 ---
 
 ## 🔧 Configuration dans Domoticz
