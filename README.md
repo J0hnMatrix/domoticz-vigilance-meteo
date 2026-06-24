@@ -83,5 +83,6 @@ Les 5 tuiles de mesures et d'alertes seront créées immédiatement avec les nom
 
 ## 📝 Licence / Crédits
 
-Plugin adapté pour fonctionner sans clé API et enrichi des données de prévisions complètes et pluie dans l'heure.
-Dépôt GitHub : [J0hnMatrix/domoticz-vigilance-meteo](https://github.com/J0hnMatrix/domoticz-vigilance-meteo)
+* Ce plugin a été développé en s'inspirant et en se basant sur le fonctionnement de l'intégration Home Assistant (HACS) [hacf-fr/meteofrance-api](https://github.com/hacf-fr/meteofrance-api) pour l'accès aux endpoints privés de Météo France.
+* Adapté pour Domoticz afin de fonctionner sans clé API personnelle et enrichi des données de vigilance, de prévisions complètes et de pluie dans l'heure.
+* Dépôt GitHub de ce plugin : [J0hnMatrix/domoticz-vigilance-meteo](https://github.com/J0hnMatrix/domoticz-vigilance-meteo)
