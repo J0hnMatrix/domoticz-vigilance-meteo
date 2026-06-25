@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<plugin key="MeteoFranceVigilance" name="Vigilance Météo France" author="Antigravity" version="1.4.1" wikilink="https://github.com/J0hnMatrix/domoticz-vigilance-meteo">
+<plugin key="MeteoFranceVigilance" name="Vigilance Météo France" author="Antigravity" version="1.4.2" wikilink="https://github.com/J0hnMatrix/domoticz-vigilance-meteo">
     <description>
         Plugin Météo France &amp; Vigilance (Sans clé requise)
 
