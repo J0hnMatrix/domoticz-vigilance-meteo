@@ -14,7 +14,7 @@
 #   Does not require any personal API key.
 #
 """
-<plugin key="MeteoFranceVigilance" name="Vigilance Météo France" author="Antigravity" version="1.4.1" wikilink="https://github.com/J0hnMatrix/domoticz-vigilance-meteo">
+<plugin key="MeteoFranceVigilance" name="Vigilance Météo France" author="Antigravity" version="1.4.2" wikilink="https://github.com/J0hnMatrix/domoticz-vigilance-meteo">
     <description>
         Plugin Météo France &amp; Vigilance (Sans clé requise)
 
@@ -304,22 +304,39 @@ class BasePlugin:
         self.fetchRain()
 
     def fetchVigilance(self):
-        url = f"https://webservice.meteofrance.com/v3/warning/full?domain={self.department}&token={self.apiToken}"
-        req = urllib.request.Request(url, headers={"accept": "application/json", "User-Agent": "Domoticz-Vigilance-Plugin/1.4"})
+        # 1. Requête pour Aujourd'hui (J0)
+        url_j0 = f"https://webservice.meteofrance.com/v3/warning/full?domain={self.department}&token={self.apiToken}&echeance=J0"
+        req_j0 = urllib.request.Request(url_j0, headers={"accept": "application/json", "User-Agent": "Domoticz-Vigilance-Plugin/1.4"})
+        
+        data_j0 = None
+        data_j1 = None
+
+        # Récupérer J0
+        try:
+            with urllib.request.urlopen(req_j0, timeout=10) as response:
+                data_j0 = json.loads(response.read().decode('utf-8'))
+        except Exception as e:
+            Domoticz.Error(f"Erreur lors de la récupération de la vigilance J0 : {str(e)}")
+            self.updateVigilanceToError(str(e))
+            return
+
+        # 2. Requête pour Demain (J1)
+        url_j1 = f"https://webservice.meteofrance.com/v3/warning/full?domain={self.department}&token={self.apiToken}&echeance=J1"
+        req_j1 = urllib.request.Request(url_j1, headers={"accept": "application/json", "User-Agent": "Domoticz-Vigilance-Plugin/1.4"})
         
         try:
-            with urllib.request.urlopen(req, timeout=10) as response:
-                data = json.loads(response.read().decode('utf-8'))
-                self.parseVigilance(data)
+            with urllib.request.urlopen(req_j1, timeout=10) as response:
+                data_j1 = json.loads(response.read().decode('utf-8'))
         except Exception as e:
-            Domoticz.Error(f"Erreur lors de la récupération de la vigilance : {str(e)}")
-            self.updateVigilanceToError(str(e))
+            Domoticz.Log(f"Vigilance J1 non disponible ou erreur : {str(e)}")
+            
+        self.parseVigilance(data_j0, data_j1)
 
-    def parseVigilance(self, data):
-        # Aujourd'hui (J)
-        today_max_color = int(data.get("color_max", 1))
+    def parseVigilance(self, data_j0, data_j1):
+        # Aujourd'hui (J0)
+        today_max_color = int(data_j0.get("color_max", 1))
         today_warnings = []
-        for item in data.get("phenomenons_items", []):
+        for item in data_j0.get("phenomenons_items", []):
             p_id = int(item["phenomenon_id"])
             p_color = int(item["phenomenon_max_color_id"])
             if p_color > 1:
@@ -332,42 +349,25 @@ class BasePlugin:
             warnings_str = ", ".join([f"{w[1]} ({w[3]})" for w in today_warnings])
             today_text = f"{COLOR_NAMES.get(today_max_color, 'Jaune')} : {warnings_str}"
 
-        # Demain (J+1)
-        now = datetime.now()
-        tomorrow_start = datetime(now.year, now.month, now.day) + timedelta(days=1)
-        tomorrow_end = tomorrow_start + timedelta(days=1)
-        tomorrow_start_ts = int(tomorrow_start.timestamp())
-        tomorrow_end_ts = int(tomorrow_end.timestamp())
+        # Demain (J1)
+        if data_j1 is not None and "color_max" in data_j1:
+            tomorrow_max_color = int(data_j1.get("color_max", 1))
+            tomorrow_warnings = []
+            for item in data_j1.get("phenomenons_items", []):
+                p_id = int(item["phenomenon_id"])
+                p_color = int(item["phenomenon_max_color_id"])
+                if p_color > 1:
+                    tomorrow_warnings.append((p_id, PHENOMENON_NAMES.get(p_id, f"Risque {p_id}"), p_color, COLOR_NAMES.get(p_color, "Inconnu")))
+            tomorrow_warnings.sort(key=lambda x: (-x[2], x[0]))
 
-        tomorrow_max_color = 1
-        tomorrow_warnings_dict = {}
-        has_tomorrow_data = False
-        
-        for item in data.get("timelaps", []):
-            p_id = int(item["phenomenon_id"])
-            for tl in item.get("timelaps_items", []):
-                begin = int(tl["begin_time"])
-                end = int(tl["end_time"])
-                color = int(tl["color_id"])
-                if end > tomorrow_start_ts and begin < tomorrow_end_ts:
-                    has_tomorrow_data = True
-                    if color > 1:
-                        tomorrow_warnings_dict[p_id] = max(tomorrow_warnings_dict.get(p_id, 1), color)
-                        tomorrow_max_color = max(tomorrow_max_color, color)
-
-        tomorrow_warnings = []
-        for p_id, p_color in tomorrow_warnings_dict.items():
-            tomorrow_warnings.append((p_id, PHENOMENON_NAMES.get(p_id, f"Risque {p_id}"), p_color, COLOR_NAMES.get(p_color, "Inconnu")))
-        tomorrow_warnings.sort(key=lambda x: (-x[2], x[0]))
-
-        if not has_tomorrow_data:
-            tomorrow_text = "Vert : Pas de vigilance ou données non encore publiées"
-            tomorrow_max_color = 1
-        elif tomorrow_max_color == 1:
-            tomorrow_text = "Vert : Pas de vigilance particulière"
+            if tomorrow_max_color == 1:
+                tomorrow_text = "Vert : Pas de vigilance particulière"
+            else:
+                warnings_str = ", ".join([f"{w[1]} ({w[3]})" for w in tomorrow_warnings])
+                tomorrow_text = f"{COLOR_NAMES.get(tomorrow_max_color, 'Jaune')} : {warnings_str}"
         else:
-            warnings_str = ", ".join([f"{w[1]} ({w[3]})" for w in tomorrow_warnings])
-            tomorrow_text = f"{COLOR_NAMES.get(tomorrow_max_color, 'Jaune')} : {warnings_str}"
+            tomorrow_max_color = 1
+            tomorrow_text = "Vert : Pas de vigilance ou données non encore publiées"
 
         # Mise à jour Domoticz
         Devices[1].Update(nValue=today_max_color, sValue=today_text)
